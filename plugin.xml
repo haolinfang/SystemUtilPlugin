@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-system-util" version="1.0.0"
+    xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>SystemUtilPlugin</name>
+    <js-module name="SystemUtilPlugin" src="www/SystemUtilPlugin.js">
+        <clobbers target="SystemUtilPlugin" />
+    </js-module>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="SystemUtilPlugin">
+                <param name="android-package" value="cordova.plugins.SystemUtilPlugin" />
+            </feature>
+        </config-file>
+        <source-file src="src/android/java/SystemUtilPlugin.java" target-dir="src/cordova/plugins" />
+        <source-file src="src/android/java/AESUtil.java" target-dir="src/cordova/plugins" />
+    </platform>
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="SystemUtilPlugin">
+                <param name="ios-package" value="SystemUtilPlugin" />
+            </feature>
+        </config-file>
+        <header-file src="src/ios/SystemUtilPlugin.h" />
+        <source-file src="src/ios/SystemUtilPlugin.m" />
+        <framework src="Security.framework" />
+        <framework src="CommonCrypto/CommonCrypto.h" />
+    </platform>
+</plugin>
