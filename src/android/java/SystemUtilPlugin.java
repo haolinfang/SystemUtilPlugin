@@ -1,7 +1,6 @@
 package cordova.plugins;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import org.apache.cordova.CallbackContext;
@@ -14,8 +13,6 @@ import org.json.JSONObject;
 public class SystemUtilPlugin extends CordovaPlugin {
 
   private static final String TAG = "SystemUtilPlugin";
-  private static final String PREFS_NAME = "SystemUtilPrefs";
-
   private String key = "";
   private String iv = "";
   private static String t = "";
@@ -39,22 +36,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
     }
   }
 
-  // 保存数据到 SharedPreferences
-  private void savePreference(String key, String value) {
-    Context context = cordova.getActivity().getApplicationContext();
-    SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putString(key, value);
-    editor.apply();
-  }
-
-  // 从 SharedPreferences 获取数据
-  private String getPreference(String key) {
-    Context context = cordova.getActivity().getApplicationContext();
-    SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-    return sharedPreferences.getString(key, "");
-  }
-
   private boolean putIn(JSONArray args, CallbackContext callbackContext) {
     try {
       JSONObject obj = args.getJSONObject(0);
@@ -70,11 +51,13 @@ public class SystemUtilPlugin extends CordovaPlugin {
 
   private boolean putPub(JSONArray args, CallbackContext callbackContext) {
     try {
+      Context context = cordova.getActivity().getApplicationContext();
       JSONObject obj = args.getJSONObject(0);
       String pubKey = obj.optString("pubKey", "");
-      savePreference("pubKey", AESUtil.encryptCBC(pubKey, key, iv));
+      String encryptedPubKey = AESUtil.encryptCBC(pubKey, key, iv);
+      SharedPrefsUtil.savePreference(context, "pubKey", encryptedPubKey);
       callbackContext.success();
-    } catch (JSONException e) {
+    } catch (Exception e) {
       callbackContext.error("缓存指纹公钥失败");
     }
 
@@ -146,6 +129,7 @@ public class SystemUtilPlugin extends CordovaPlugin {
 
   private boolean getPub(JSONArray args, CallbackContext callbackContext) {
     try {
+      Context context = cordova.getActivity().getApplicationContext();
       JSONObject obj = args.getJSONObject(0);
       String name = obj.optString("name", "");
       switch (name) {
@@ -153,8 +137,9 @@ public class SystemUtilPlugin extends CordovaPlugin {
           callbackContext.success(AESUtil.decryptCBC(s, key, iv));
           break;
         case "secend":
-          String pubKey = getPreference("pubKey");
-          callbackContext.success(AESUtil.decryptCBC(pubKey, key, iv));
+          String encryptedPubKey = SharedPrefsUtil.getPreference(context, "pubKey");
+          String decryptedPubKey = AESUtil.decryptCBC(encryptedPubKey, key, iv);
+          callbackContext.success(decryptedPubKey);
           break;
         default:
           callbackContext.error("参数错误");

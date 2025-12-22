@@ -1,6 +1,8 @@
 #import "SystemUtilPlugin.h"
-#import <CommonCrypto/CommonCryptor.h>
-#import <CommonCrypto/CommonDigest.h>
+#import "AESUtil.h"
+#import "MD5Util.h"
+#import "RSAUtil.h"
+#import "StorageUtil.h"
 #import <UIKit/UIKit.h>
 
 @implementation SystemUtilPlugin {
@@ -11,7 +13,6 @@
 static NSString *const kKey = @"";
 static NSString *const kIV = @"";
 static NSString *const kEncryptedS = @"";
-static NSString *const kPrefsName = @"SystemUtilPrefs";
 
 #pragma mark - 主要方法
 
@@ -46,10 +47,8 @@ static NSString *const kPrefsName = @"SystemUtilPrefs";
         NSString* pubKey = [params objectForKey:@"pubKey"] ?: @"";
         
         if (pubKey.length > 0) {
-            // 加密并存储到NSUserDefaults
-            NSString* encryptedPubKey = [self encryptAESCBC:pubKey key:kKey iv:kIV];
-            [[NSUserDefaults standardUserDefaults] setObject:encryptedPubKey forKey:@"pubKey"];
-            [[NSUserDefaults standardUserDefaults] synchronize];
+            NSString* encryptedPubKey = [AESUtil encryptCBC:pubKey key:kKey iv:kIV];
+            [StorageUtil savePreference:@"pubKey" value:encryptedPubKey];
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         } else {
@@ -78,7 +77,7 @@ static NSString *const kPrefsName = @"SystemUtilPrefs";
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                              messageAsString:_prvKey ?: @""];
         } else if ([name isEqualToString:@"s"]) {
-            NSString* decryptedS = [self decryptAESCBC:kEncryptedS key:kKey iv:kIV];
+            NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                              messageAsString:decryptedS ?: @""];
         } else if ([name isEqualToString:@"all"]) {
@@ -87,7 +86,7 @@ static NSString *const kPrefsName = @"SystemUtilPrefs";
             resultDict[@"t"] = _accessToken ?: @"";
             resultDict[@"p"] = _prvKey ?: @"";
             
-            NSString* decryptedS = [self decryptAESCBC:kEncryptedS key:kKey iv:kIV];
+            NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
             resultDict[@"s"] = decryptedS ?: @"";
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
@@ -113,11 +112,11 @@ static NSString *const kPrefsName = @"SystemUtilPrefs";
             NSString* md52 = @"";
             
             if (m1.length > 0) {
-                md51 = [self md5:m1];
+                md51 = [MD5Util md5:m1];
             }
             
             if (m2.length > 0) {
-                md52 = [self md5:m2];
+                md52 = [MD5Util md5:m2];
             }
             
             NSString* md5Result = @"";
@@ -155,13 +154,13 @@ static NSString *const kPrefsName = @"SystemUtilPrefs";
         NSString* name = [params objectForKey:@"name"] ?: @"";
         
         if ([name isEqualToString:@"first"]) {
-            NSString* decryptedS = [self decryptAESCBC:kEncryptedS key:kKey iv:kIV];
+            NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                              messageAsString:decryptedS ?: @""];
         } else if ([name isEqualToString:@"secend"]) {
-            NSString* encryptedPubKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"pubKey"];
-            if (encryptedPubKey) {
-                NSString* decryptedPubKey = [self decryptAESCBC:encryptedPubKey key:kKey iv:kIV];
+            NSString* encryptedPubKey = [StorageUtil getPreference:@"pubKey"];
+            if (encryptedPubKey.length > 0) {
+                NSString* decryptedPubKey = [AESUtil decryptCBC:encryptedPubKey key:kKey iv:kIV];
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                                  messageAsString:decryptedPubKey ?: @""];
             } else {
@@ -178,154 +177,6 @@ static NSString *const kPrefsName = @"SystemUtilPrefs";
     }
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
-
-#pragma mark - AES CBC 加密/解密方法
-
-- (NSString*)encryptAESCBC:(NSString*)plaintext key:(NSString*)key iv:(NSString*)iv {
-    @try {
-        if (key.length == 0) {
-            return nil;
-        }
-        
-        NSData *plainData = [plaintext dataUsingEncoding:NSUTF8StringEncoding];
-        NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
-        NSData *ivData = [iv dataUsingEncoding:NSUTF8StringEncoding];
-        
-        // 确保IV长度为16字节
-        if (ivData.length < 16) {
-            NSMutableData *paddedIV = [ivData mutableCopy];
-            [paddedIV increaseLengthBy:16 - ivData.length];
-            ivData = paddedIV;
-        } else if (ivData.length > 16) {
-            ivData = [ivData subdataWithRange:NSMakeRange(0, 16)];
-        }
-        
-        size_t bufferSize = plainData.length + kCCBlockSizeAES128;
-        void *buffer = malloc(bufferSize);
-        
-        if (buffer == NULL) {
-            return nil;
-        }
-        
-        size_t numBytesEncrypted = 0;
-        CCCryptorStatus cryptStatus = CCCrypt(kCCEncrypt,
-                                              kCCAlgorithmAES,
-                                              kCCOptionPKCS7Padding,
-                                              keyData.bytes,
-                                              kCCKeySizeAES128,
-                                              ivData.bytes,
-                                              plainData.bytes,
-                                              plainData.length,
-                                              buffer,
-                                              bufferSize,
-                                              &numBytesEncrypted);
-        
-        NSString *encryptedBase64 = nil;
-        
-        if (cryptStatus == kCCSuccess) {
-            NSData *encryptedData = [NSData dataWithBytesNoCopy:buffer length:numBytesEncrypted];
-            encryptedBase64 = [encryptedData base64EncodedStringWithOptions:0];
-        } else {
-            free(buffer);
-            NSLog(@"AES加密失败，状态码: %d", cryptStatus);
-            return nil;
-        }
-        
-        free(buffer);
-        return encryptedBase64;
-        
-    } @catch (NSException *exception) {
-        NSLog(@"AES加密异常: %@", exception);
-        return nil;
-    }
-}
-
-- (NSString*)decryptAESCBC:(NSString*)encryptedBase64 key:(NSString*)key iv:(NSString*)iv {
-    @try {
-        if (key.length == 0) {
-            return nil;
-        }
-        
-        // 清理Base64字符串（移除换行符）
-        NSString *cleanBase64 = [encryptedBase64 stringByReplacingOccurrencesOfString:@"\n" withString:@""];
-        
-        // Base64解码
-        NSData *encryptedData = [[NSData alloc] initWithBase64EncodedString:cleanBase64 
-                                                                   options:0];
-        if (!encryptedData) {
-            NSLog(@"Base64解码失败");
-            return nil;
-        }
-        
-        // 准备密钥和IV
-        NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
-        NSData *ivData = [iv dataUsingEncoding:NSUTF8StringEncoding];
-        
-        // 确保IV长度为16字节（AES块大小）
-        if (ivData.length < 16) {
-            NSMutableData *paddedIV = [ivData mutableCopy];
-            [paddedIV increaseLengthBy:16 - ivData.length];
-            ivData = paddedIV;
-        } else if (ivData.length > 16) {
-            ivData = [ivData subdataWithRange:NSMakeRange(0, 16)];
-        }
-        
-        // 执行AES解密
-        size_t bufferSize = encryptedData.length + kCCBlockSizeAES128;
-        void *buffer = malloc(bufferSize);
-        
-        if (buffer == NULL) {
-            return nil;
-        }
-        
-        size_t numBytesDecrypted = 0;
-        CCCryptorStatus cryptStatus = CCCrypt(kCCDecrypt,
-                                              kCCAlgorithmAES,
-                                              kCCOptionPKCS7Padding,
-                                              keyData.bytes,
-                                              kCCKeySizeAES128,
-                                              ivData.bytes,
-                                              encryptedData.bytes,
-                                              encryptedData.length,
-                                              buffer,
-                                              bufferSize,
-                                              &numBytesDecrypted);
-        
-        NSString *decryptedString = nil;
-        
-        if (cryptStatus == kCCSuccess) {
-            NSData *decryptedData = [NSData dataWithBytesNoCopy:buffer length:numBytesDecrypted];
-            decryptedString = [[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding];
-        } else {
-            free(buffer);
-            NSLog(@"AES解密失败，状态码: %d", cryptStatus);
-            return nil;
-        }
-        
-        free(buffer);
-        return decryptedString;
-        
-    } @catch (NSException *exception) {
-        NSLog(@"AES解密异常: %@", exception);
-        return nil;
-    }
-}
-
-#pragma mark - MD5 计算方法
-
-- (NSString*)md5:(NSString*)input {
-    const char *cStr = [input UTF8String];
-    unsigned char digest[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(cStr, (CC_LONG)strlen(cStr), digest);
-    
-    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
-    
-    for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
-        [output appendFormat:@"%02x", digest[i]];
-    }
-    
-    return output;
 }
 
 @end

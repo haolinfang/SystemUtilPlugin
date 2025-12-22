@@ -13,19 +13,53 @@
                 <param name="android-package" value="cordova.plugins.SystemUtilPlugin" />
             </feature>
         </config-file>
+        
+        <!-- 主插件类 -->
         <source-file src="src/android/java/SystemUtilPlugin.java" target-dir="src/cordova/plugins" />
+        
+        <!-- AES 加解密工具类 -->
         <source-file src="src/android/java/AESUtil.java" target-dir="src/cordova/plugins" />
+        
+        <!-- MD5 计算工具类 -->
         <source-file src="src/android/java/MD5Util.java" target-dir="src/cordova/plugins" />
+        
+        <!-- RSA 加密工具类 -->
+        <source-file src="src/android/java/RSAUtil.java" target-dir="src/cordova/plugins" />
+        
+        <!-- SharedPreferences 工具类 -->
+        <source-file src="src/android/java/SharedPrefsUtil.java" target-dir="src/cordova/plugins" />
     </platform>
+    
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
             <feature name="SystemUtilPlugin">
                 <param name="ios-package" value="SystemUtilPlugin" />
             </feature>
         </config-file>
+        
+        <!-- 主插件类 -->
         <header-file src="src/ios/SystemUtilPlugin.h" />
         <source-file src="src/ios/SystemUtilPlugin.m" />
+        
+        <!-- AES 加解密工具类 -->
+        <header-file src="src/ios/AESUtil.h" />
+        <source-file src="src/ios/AESUtil.m" />
+        
+        <!-- MD5 计算工具类 -->
+        <header-file src="src/ios/MD5Util.h" />
+        <source-file src="src/ios/MD5Util.m" />
+        
+        <!-- RSA 加密工具类 -->
+        <header-file src="src/ios/RSAUtil.h" />
+        <source-file src="src/ios/RSAUtil.m" />
+        
+        <!-- 存储工具类 -->
+        <header-file src="src/ios/StorageUtil.h" />
+        <source-file src="src/ios/StorageUtil.m" />
+        
+        <!-- 系统框架 -->
         <framework src="Security.framework" />
-        <framework src="CommonCrypto/CommonCrypto.h" />
+        <framework src="CoreFoundation.framework" />
+        <framework src="CommonCrypto.framework" weak="true" />
     </platform>
 </plugin>
