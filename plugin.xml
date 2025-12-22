@@ -15,6 +15,7 @@
         </config-file>
         <source-file src="src/android/java/SystemUtilPlugin.java" target-dir="src/cordova/plugins" />
         <source-file src="src/android/java/AESUtil.java" target-dir="src/cordova/plugins" />
+        <source-file src="src/android/java/MD5Util.java" target-dir="src/cordova/plugins" />
     </platform>
     <platform name="ios">
         <config-file target="config.xml" parent="/*">

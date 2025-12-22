@@ -1,7 +1,10 @@
 package cordova.plugins;
 
+import android.text.TextUtils;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.device.Device;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,6 +63,38 @@ public class SystemUtilPlugin extends CordovaPlugin {
           all.put("p", p);
           all.put("s", AESUtil.decryptCBC(s, key, iv));
           callbackContext.success(all);
+          break;
+        case "sign":
+          JSONObject result = new JSONObject();
+          String a1 = obj.optString("a1", "");
+          String a2 = obj.optString("a2", "");
+          String a3 = obj.optString("a3", "");
+          String m1 = a1 + a2 + a3;
+          String m2 = "";
+          if (!TextUtils.isEmpty(t)) {
+            m1 += t;
+          }
+          if (!TextUtils.isEmpty(Device.uuid)) {
+            m2 += Device.uuid;
+          }
+          String md51 = "";
+          String md52 = "";
+          if (!TextUtils.isEmpty(m1)) {
+            md51 = MD5Util.md5(m1);
+          }
+          if (!TextUtils.isEmpty(m2)) {
+            md52 = MD5Util.md5(m2);
+          }
+          String md5Result = "";
+          if (!TextUtils.isEmpty(md51)) {
+            md5Result += md51;
+          }
+          if (!TextUtils.isEmpty(md52)) {
+            md5Result += md52;
+          }
+          result.put("b", md5Result);
+
+          callbackContext.success(result);
           break;
         default:
           callbackContext.error("参数错误");
