@@ -7,3 +7,11 @@ exports.putIn = function (arg0, success, error) {
 exports.putOut = function (arg0, success, error) {
     exec(success, error, 'SystemUtilPlugin', 'putOut', arg0);
 };
+
+exports.putPub = function (arg0, success, error) {
+    exec(success, error, 'SystemUtilPlugin', 'putPub', arg0);
+};
+
+exports.getPub = function (arg0, success, error) {
+    exec(success, error, 'SystemUtilPlugin', 'getPub', arg0);
+};
