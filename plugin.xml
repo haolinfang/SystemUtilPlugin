@@ -61,6 +61,5 @@
         <!-- 系统框架 -->
         <framework src="Security.framework" />
         <framework src="CoreFoundation.framework" />
-        <framework src="CommonCrypto.framework" weak="true" />
     </platform>
 </plugin>

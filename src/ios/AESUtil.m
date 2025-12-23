@@ -13,14 +13,16 @@
         NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
         NSData *ivData = [iv dataUsingEncoding:NSUTF8StringEncoding];
         
+        // 确保 IV 长度为 16 字节
         if (ivData.length < 16) {
-            NSMutableData *paddedIV = [ivData mutableCopy];
-            [paddedIV increaseLengthBy:16 - ivData.length];
+            NSMutableData *paddedIV = [NSMutableData dataWithData:ivData];
+            [paddedIV setLength:16];
             ivData = paddedIV;
         } else if (ivData.length > 16) {
             ivData = [ivData subdataWithRange:NSMakeRange(0, 16)];
         }
         
+        // 加密
         size_t bufferSize = plainData.length + kCCBlockSizeAES128;
         void *buffer = malloc(bufferSize);
         
@@ -44,12 +46,10 @@
         NSString *encryptedBase64 = nil;
         
         if (cryptStatus == kCCSuccess) {
-            NSData *encryptedData = [NSData dataWithBytesNoCopy:buffer length:numBytesEncrypted];
+            NSData *encryptedData = [NSData dataWithBytes:buffer length:numBytesEncrypted];
             encryptedBase64 = [encryptedData base64EncodedStringWithOptions:0];
         } else {
-            free(buffer);
             NSLog(@"AES加密失败，状态码: %d", cryptStatus);
-            return nil;
         }
         
         free(buffer);
@@ -67,10 +67,12 @@
             return nil;
         }
         
-        NSString *cleanBase64 = [encryptedBase64 stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        // 清理 Base64 字符串
+        NSString *cleanBase64 = [encryptedBase64 stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        cleanBase64 = [cleanBase64 stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        cleanBase64 = [cleanBase64 stringByReplacingOccurrencesOfString:@"\r" withString:@""];
         
-        NSData *encryptedData = [[NSData alloc] initWithBase64EncodedString:cleanBase64 
-                                                                   options:0];
+        NSData *encryptedData = [[NSData alloc] initWithBase64EncodedString:cleanBase64 options:0];
         if (!encryptedData) {
             NSLog(@"Base64解码失败");
             return nil;
@@ -79,14 +81,16 @@
         NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
         NSData *ivData = [iv dataUsingEncoding:NSUTF8StringEncoding];
         
+        // 确保 IV 长度为 16 字节
         if (ivData.length < 16) {
-            NSMutableData *paddedIV = [ivData mutableCopy];
-            [paddedIV increaseLengthBy:16 - ivData.length];
+            NSMutableData *paddedIV = [NSMutableData dataWithData:ivData];
+            [paddedIV setLength:16];
             ivData = paddedIV;
         } else if (ivData.length > 16) {
             ivData = [ivData subdataWithRange:NSMakeRange(0, 16)];
         }
         
+        // 解密
         size_t bufferSize = encryptedData.length + kCCBlockSizeAES128;
         void *buffer = malloc(bufferSize);
         
@@ -110,12 +114,10 @@
         NSString *decryptedString = nil;
         
         if (cryptStatus == kCCSuccess) {
-            NSData *decryptedData = [NSData dataWithBytesNoCopy:buffer length:numBytesDecrypted];
+            NSData *decryptedData = [NSData dataWithBytes:buffer length:numBytesDecrypted];
             decryptedString = [[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding];
         } else {
-            free(buffer);
             NSLog(@"AES解密失败，状态码: %d", cryptStatus);
-            return nil;
         }
         
         free(buffer);
