@@ -15,7 +15,7 @@ public class RSAUtil {
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         byte[] encryptedBytes = cipher.doFinal(plaintext.getBytes("UTF-8"));
         
-        return Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
+        return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP);
     }
     
     public static PublicKey getPublicKeyFromString(String publicKeyStr) throws Exception {
@@ -26,7 +26,7 @@ public class RSAUtil {
                 .replace("-----END RSA PUBLIC KEY-----", "")
                 .replaceAll("\\s", "");
         
-        byte[] encoded = Base64.decode(publicKeyPEM, Base64.DEFAULT);
+        byte[] encoded = Base64.decode(publicKeyPEM, Base64.NO_WRAP);
         
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);

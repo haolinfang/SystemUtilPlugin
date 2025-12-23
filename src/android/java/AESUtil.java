@@ -31,7 +31,7 @@ public class AESUtil {
         cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
         
         byte[] encryptedBytes = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
-        return Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
+        return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP);
     }
     
     public static String decryptCBC(String encryptedBase64, String key, String iv) throws Exception {
@@ -56,7 +56,7 @@ public class AESUtil {
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
         
-        byte[] encryptedBytes = Base64.decode(encryptedBase64, Base64.DEFAULT);
+        byte[] encryptedBytes = Base64.decode(encryptedBase64, Base64.NO_WRAP);
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
         
         return new String(decryptedBytes, StandardCharsets.UTF_8);

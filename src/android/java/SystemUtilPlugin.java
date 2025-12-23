@@ -21,6 +21,12 @@ public class SystemUtilPlugin extends CordovaPlugin {
   private static String ps = "";
 
   @Override
+  protected void pluginInitialize() {
+    super.pluginInitialize();
+    SharedPrefsUtil.savePreference(context, "pubKey", ps);
+  }
+
+  @Override
   public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
     if (action.equals("putIn")) {
       return putIn(args, callbackContext);
