@@ -1,35 +1,21 @@
 package cordova.plugins;
 
-import android.util.Base64;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
-import javax.crypto.Cipher;
+import android.content.Context;
+import android.content.SharedPreferences;
 
-public class RSAUtil {
-
-    public static String encryptWithRSA(String plaintext, String publicKeyStr) throws Exception {
-        PublicKey publicKey = getPublicKeyFromString(publicKeyStr);
-
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        byte[] encryptedBytes = cipher.doFinal(plaintext.getBytes("UTF-8"));
-
-        return Base64.encodeToString(encryptedBytes, Base64.NO_WRAP);
+public class SharedPrefsUtil {
+    
+    private static final String PREFS_NAME = "SystemUtilPrefs";
+    
+    public static void savePreference(Context context, String key, String value) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key, value);
+        editor.apply();
     }
-
-    public static PublicKey getPublicKeyFromString(String publicKeyStr) throws Exception {
-        String publicKeyPEM = publicKeyStr
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replace("-----BEGIN RSA PUBLIC KEY-----", "")
-                .replace("-----END RSA PUBLIC KEY-----", "")
-                .replaceAll("\\s", "");
-
-        byte[] encoded = Base64.decode(publicKeyPEM, Base64.DEFAULT);
-
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encoded);
-        return keyFactory.generatePublic(keySpec);
+    
+    public static String getPreference(Context context, String key) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return sharedPreferences.getString(key, "");
     }
 }

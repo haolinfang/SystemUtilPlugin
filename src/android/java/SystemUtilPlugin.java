@@ -25,6 +25,7 @@ public class SystemUtilPlugin extends CordovaPlugin {
   @Override
   protected void pluginInitialize() {
     super.pluginInitialize();
+    Context context = cordova.getActivity().getApplicationContext();
     SharedPrefsUtil.savePreference(context, "pubKey", ps);
   }
 
@@ -85,6 +86,7 @@ public class SystemUtilPlugin extends CordovaPlugin {
           break;
         case "s":
           callbackContext.success(AESUtil.decryptCBC(s, key, iv));
+          break;
         case "ps":
           callbackContext.success(AESUtil.decryptCBC(ps, key, iv));
           break;

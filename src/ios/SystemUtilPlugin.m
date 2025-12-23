@@ -13,6 +13,16 @@
 static NSString *const kKey = @"";
 static NSString *const kIV = @"";
 static NSString *const kEncryptedS = @"";
+static NSString *const kEncryptedPS = @""; // 添加 PS 常量
+
+#pragma mark - 初始化方法
+
+- (void)pluginInitialize {
+    [super pluginInitialize];
+    
+    // 初始化时保存 PS 到 UserDefaults
+    [StorageUtil savePreference:@"pubKey" value:kEncryptedPS];
+}
 
 #pragma mark - 主要方法
 
@@ -80,6 +90,10 @@ static NSString *const kEncryptedS = @"";
             NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                              messageAsString:decryptedS ?: @""];
+        } else if ([name isEqualToString:@"ps"]) {
+            NSString* decryptedPS = [AESUtil decryptCBC:kEncryptedPS key:kKey iv:kIV];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
+                                             messageAsString:decryptedPS ?: @""];
         } else if ([name isEqualToString:@"all"]) {
             NSMutableDictionary* resultDict = [NSMutableDictionary dictionary];
             
