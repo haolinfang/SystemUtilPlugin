@@ -14,18 +14,29 @@
         
         // Base64解码
         NSData *publicKeyData = [[NSData alloc] initWithBase64EncodedString:publicKeyPEM options:0];
+        if (!publicKeyData) {
+            NSLog(@"公钥Base64解码失败");
+            return nil;
+        }
         
         // 创建公钥
-        CFDataRef publicKeyCFData = (__bridge CFDataRef)publicKeyData;
-        SecKeyRef publicKey = NULL;
-        
-        CFDictionaryRef keyAttributes = (__bridge CFDictionaryRef)@{
-            (id)kSecAttrKeyType: (id)kSecAttrKeyTypeRSA,
-            (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPublic,
-            (id)kSecAttrKeySizeInBits: @2048
+        NSDictionary *keyAttributes = @{
+            (__bridge id)kSecAttrKeyType: (__bridge id)kSecAttrKeyTypeRSA,
+            (__bridge id)kSecAttrKeyClass: (__bridge id)kSecAttrKeyClassPublic,
+            (__bridge id)kSecAttrKeySizeInBits: @2048
         };
         
-        publicKey = SecKeyCreateFromData(keyAttributes, publicKeyCFData, NULL);
+        CFErrorRef error = NULL;
+        SecKeyRef publicKey = SecKeyCreateWithData((__bridge CFDataRef)publicKeyData, 
+                                                   (__bridge CFDictionaryRef)keyAttributes, 
+                                                   &error);
+        
+        if (error) {
+            NSError *err = (__bridge NSError *)error;
+            NSLog(@"创建公钥失败: %@", err.localizedDescription);
+            CFRelease(error);
+            return nil;
+        }
         
         if (!publicKey) {
             NSLog(@"创建公钥失败");
@@ -34,8 +45,13 @@
         
         // 加密数据
         NSData *plainData = [plaintext dataUsingEncoding:NSUTF8StringEncoding];
-        CFDataRef plainDataRef = (__bridge CFDataRef)plainData;
+        if (!plainData) {
+            NSLog(@"明文数据转换失败");
+            CFRelease(publicKey);
+            return nil;
+        }
         
+        // 使用 kSecKeyAlgorithmRSAEncryptionPKCS1 算法
         SecKeyAlgorithm algorithm = kSecKeyAlgorithmRSAEncryptionPKCS1;
         
         if (!SecKeyIsAlgorithmSupported(publicKey, kSecKeyOperationTypeEncrypt, algorithm)) {
@@ -44,11 +60,22 @@
             return nil;
         }
         
-        CFErrorRef error = NULL;
-        CFDataRef encryptedData = SecKeyCreateEncryptedData(publicKey, algorithm, plainDataRef, &error);
+        CFErrorRef encryptError = NULL;
+        CFDataRef encryptedData = SecKeyCreateEncryptedData(publicKey, 
+                                                            algorithm, 
+                                                            (__bridge CFDataRef)plainData, 
+                                                            &encryptError);
         
-        if (error) {
-            NSLog(@"加密失败: %@", error);
+        if (encryptError) {
+            NSError *err = (__bridge NSError *)encryptError;
+            NSLog(@"RSA加密失败: %@", err.localizedDescription);
+            CFRelease(publicKey);
+            CFRelease(encryptError);
+            return nil;
+        }
+        
+        if (!encryptedData) {
+            NSLog(@"RSA加密失败，未返回数据");
             CFRelease(publicKey);
             return nil;
         }
