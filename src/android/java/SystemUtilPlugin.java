@@ -4,7 +4,9 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.device.Device;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -83,6 +85,8 @@ public class SystemUtilPlugin extends CordovaPlugin {
           break;
         case "s":
           callbackContext.success(AESUtil.decryptCBC(s, key, iv));
+        case "ps":
+          callbackContext.success(AESUtil.decryptCBC(ps, key, iv));
           break;
         case "all":
           JSONObject all = new JSONObject();
