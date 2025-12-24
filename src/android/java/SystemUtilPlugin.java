@@ -1,7 +1,6 @@
 package cordova.plugins;
 
 import android.content.Context;
-import android.java.SharedPrefsUtil;
 import android.text.TextUtils;
 
 import org.apache.cordova.CallbackContext;
