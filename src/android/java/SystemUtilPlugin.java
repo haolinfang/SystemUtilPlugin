@@ -1,6 +1,7 @@
 package cordova.plugins;
 
 import android.content.Context;
+import android.java.SharedPrefsUtil;
 import android.text.TextUtils;
 
 import org.apache.cordova.CallbackContext;
@@ -15,18 +16,20 @@ import org.json.JSONObject;
 public class SystemUtilPlugin extends CordovaPlugin {
 
   private static final String TAG = "SystemUtilPlugin";
-  private String key = "";
-  private String iv = "";
+  private String key = "a9s8d7f6g5h4j3k2";
+  private String iv = "z1x2c3v4b5n6m7q8";
   private static String t = "";
   private static String p = "";
-  private static String s = "";
-  private static String ps = "";
+  private static String s = "Cu34hcmWCXkHft5FmI2pP0SoekDRaj2woG//1Tj4vV0CR+OeCCj1ci3Y6Ln3UKPr2+KFQOfOykts8Bg1NNI/8PvCbKQUNMrn3u3IZNMP3YrlcnD5yJcJHmlwnMBZX6Ruw3KyznynpFJGwTlyJgiwrTRsNjASV5i5WQlwhcXECSgqKjN9Uug2aBbIfho73GQb";
+  public static String fin1key = "mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ5p6VLE3d/0uNymciQEoTUrTWlwxoqQT/Ogkg3zLtIlN8n5wlfCUuhzn4JFTPZXV/pVbX7nKcvffaGfbN4Z6IJteNktXRTzJvPeI+EKHM5vlqIn+NFfk9AUptm20Rtyb+hdc0Jkrrr05SRR4vJDy9RHU1LrWyh6DjybSFfdh9jH40iWhaBmlWYJMBiuQPnidpSyGEy5POUIA+nt6TBoEmtnPO6AxXnx4ZSo68l2oRiPVQQkZBL6LEvH7cxz6qMZ1Y/rXZQ7TzU7osswnp0CLkuZW1NsCdxP0VcUGNjs0LzTyOP0RrqtrmcGWiaggAKo3sA9TtOpu/YMflPWToIEh0eRBd6WIoc732KiKq65NJ8wIppr0wwGqz3mGpPV92xktQw9l4euaT4FujbxP5yiXylI9CyKbHEAU5aCYMb3rkvWTWgGB8CjSuaYGfH9x/NlX4Pll9dBgjQ6k6PHv8nTBypiMrAg1Z+iOnAcKeKU6O70sA==";
+  public static String fac1Key = "mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ4zjCzJknjy4dDnZLawGRqA2OnppD9qLsRlPMwsIab2Nm7wFXuCROXov/taWtK94wOU2ckosa5H7jfvHxo/hIuHTPh39oFd3EaL4auM+ePx0cJkWA1H0Jg+Zf+bpp8Amf9f/66XW6qzKekKlhEgmCt3mZbqbPeP84THxcXaYb0Dg13XBrVK9QE5MIFqD9wx/poOb698M0vo/Pfax1hljJm57ZgD2ScVJp96ES+3NrHeNc8noCCvn71iSnwFEgsuHFzLHKSljQsbZqafMLzkmT5Xze9TCS2tKCU3XVRmL8pYo37GoWTfCbCwv3diCaJA+VgaKKX7Z4tpqS5vfxs0wHohjILIWcQeAtbhViVFAWQhlqCPun0pD/OUVWnrOQPswFjtIma8Y2bWTd93HDC2/uCRsObGSiASXjgJUJ3NTcNgK1v6SmzFocR1NoXQtv8r2DLK4rfWlZSixFQW5yCtK3yGlgRTtGDzkPHzznDyQq2mbQ==";
 
   @Override
   protected void pluginInitialize() {
     super.pluginInitialize();
     Context context = cordova.getActivity().getApplicationContext();
-    SharedPrefsUtil.savePreference(context, "pubKey", ps);
+    SharedPrefsUtil.savePreference(context, "fin1key", fin1key);
+    SharedPrefsUtil.savePreference(context, "fac1Key", fac1Key);
   }
 
   @Override
@@ -37,8 +40,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
       return putPub(args, callbackContext);
     } else if (action.equals("putOut")) {
       return putOut(args, callbackContext);
-    } else if (action.equals("getPub")) {
-      return getPub(args, callbackContext);
     } else {
       callbackContext.error("未知的action: " + action);
       return false;
@@ -62,9 +63,16 @@ public class SystemUtilPlugin extends CordovaPlugin {
     try {
       Context context = cordova.getActivity().getApplicationContext();
       JSONObject obj = args.getJSONObject(0);
-      String pubKey = obj.optString("pubKey", "");
-      String encryptedPubKey = AESUtil.encryptCBC(pubKey, key, iv);
-      SharedPrefsUtil.savePreference(context, "pubKey", encryptedPubKey);
+      String fingerKey = obj.optString("fingerKey", "");
+      String faceKey = obj.optString("faceKey", "");
+      if (!"".equals(fingerKey)) {
+        String encryptedPubKey = AESUtil.encryptCBC(fingerKey, key, iv);
+        SharedPrefsUtil.savePreference(context, "fin2Key", encryptedPubKey);
+      }
+      if (!"".equals(faceKey)) {
+        String encryptedPubKey = AESUtil.encryptCBC(faceKey, key, iv);
+        SharedPrefsUtil.savePreference(context, "fac2Key", encryptedPubKey);
+      }
       callbackContext.success();
     } catch (Exception e) {
       callbackContext.error("缓存指纹公钥失败");
@@ -86,9 +94,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
           break;
         case "s":
           callbackContext.success(AESUtil.decryptCBC(s, key, iv));
-          break;
-        case "ps":
-          callbackContext.success(AESUtil.decryptCBC(ps, key, iv));
           break;
         case "all":
           JSONObject all = new JSONObject();
@@ -128,30 +133,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
           result.put("b", md5Result);
 
           callbackContext.success(result);
-          break;
-        default:
-          callbackContext.error("参数错误");
-          break;
-      }
-    } catch (Exception e) {
-      callbackContext.error(e.getMessage());
-    }
-    return true;
-  }
-
-  private boolean getPub(JSONArray args, CallbackContext callbackContext) {
-    try {
-      Context context = cordova.getActivity().getApplicationContext();
-      JSONObject obj = args.getJSONObject(0);
-      String name = obj.optString("name", "");
-      switch (name) {
-        case "first":
-          callbackContext.success(AESUtil.decryptCBC(s, key, iv));
-          break;
-        case "secend":
-          String encryptedPubKey = SharedPrefsUtil.getPreference(context, "pubKey");
-          String decryptedPubKey = AESUtil.decryptCBC(encryptedPubKey, key, iv);
-          callbackContext.success(decryptedPubKey);
           break;
         default:
           callbackContext.error("参数错误");

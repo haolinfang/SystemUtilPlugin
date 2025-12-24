@@ -10,18 +10,19 @@
     NSString *_prvKey;
 }
 
-static NSString *const kKey = @"";
-static NSString *const kIV = @"";
-static NSString *const kEncryptedS = @"";
-static NSString *const kEncryptedPS = @""; // 添加 PS 常量
+static NSString *const kKey = @"a9s8d7f6g5h4j3k2";
+static NSString *const kIV = @"z1x2c3v4b5n6m7q8";
+static NSString *const kEncryptedS = @"Cu34hcmWCXkHft5FmI2pP0SoekDRaj2woG//1Tj4vV0CR+OeCCj1ci3Y6Ln3UKPr2+KFQOfOykts8Bg1NNI/8PvCbKQUNMrn3u3IZNMP3YrlcnD5yJcJHmlwnMBZX6Ruw3KyznynpFJGwTlyJgiwrTRsNjASV5i5WQlwhcXECSgqKjN9Uug2aBbIfho73GQb";
+static NSString *const kEncryptedFS = @"mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ5p6VLE3d/0uNymciQEoTUrTWlwxoqQT/Ogkg3zLtIlN8n5wlfCUuhzn4JFTPZXV/pVbX7nKcvffaGfbN4Z6IJteNktXRTzJvPeI+EKHM5vlqIn+NFfk9AUptm20Rtyb+hdc0Jkrrr05SRR4vJDy9RHU1LrWyh6DjybSFfdh9jH40iWhaBmlWYJMBiuQPnidpSyGEy5POUIA+nt6TBoEmtnPO6AxXnx4ZSo68l2oRiPVQQkZBL6LEvH7cxz6qMZ1Y/rXZQ7TzU7osswnp0CLkuZW1NsCdxP0VcUGNjs0LzTyOP0RrqtrmcGWiaggAKo3sA9TtOpu/YMflPWToIEh0eRBd6WIoc732KiKq65NJ8wIppr0wwGqz3mGpPV92xktQw9l4euaT4FujbxP5yiXylI9CyKbHEAU5aCYMb3rkvWTWgGB8CjSuaYGfH9x/NlX4Pll9dBgjQ6k6PHv8nTBypiMrAg1Z+iOnAcKeKU6O70sA==";
+static NSString *const kEncryptedPS = @"mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ4zjCzJknjy4dDnZLawGRqA2OnppD9qLsRlPMwsIab2Nm7wFXuCROXov/taWtK94wOU2ckosa5H7jfvHxo/hIuHTPh39oFd3EaL4auM+ePx0cJkWA1H0Jg+Zf+bpp8Amf9f/66XW6qzKekKlhEgmCt3mZbqbPeP84THxcXaYb0Dg13XBrVK9QE5MIFqD9wx/poOb698M0vo/Pfax1hljJm57ZgD2ScVJp96ES+3NrHeNc8noCCvn71iSnwFEgsuHFzLHKSljQsbZqafMLzkmT5Xze9TCS2tKCU3XVRmL8pYo37GoWTfCbCwv3diCaJA+VgaKKX7Z4tpqS5vfxs0wHohjILIWcQeAtbhViVFAWQhlqCPun0pD/OUVWnrOQPswFjtIma8Y2bWTd93HDC2/uCRsObGSiASXjgJUJ3NTcNgK1v6SmzFocR1NoXQtv8r2DLK4rfWlZSixFQW5yCtK3yGlgRTtGDzkPHzznDyQq2mbQ==";
 
 #pragma mark - 初始化方法
 
 - (void)pluginInitialize {
     [super pluginInitialize];
     
-    // 初始化时保存 PS 到 UserDefaults
-    [StorageUtil savePreference:@"pubKey" value:kEncryptedPS];
+    [StorageUtil savePreference:@"fin1Key" value:kEncryptedFS];
+    [StorageUtil savePreference:@"fac1Key" value:kEncryptedPS];
 }
 
 #pragma mark - 主要方法
@@ -54,11 +55,17 @@ static NSString *const kEncryptedPS = @""; // 添加 PS 常量
     
     @try {
         NSDictionary* params = [command.arguments objectAtIndex:0];
-        NSString* pubKey = [params objectForKey:@"pubKey"] ?: @"";
+        NSString* fingerKey = [params objectForKey:@"fingerKey"] ?: @"";
+        NSString* faceKey = [params objectForKey:@"faceKey"] ?: @"";
         
-        if (pubKey.length > 0) {
-            NSString* encryptedPubKey = [AESUtil encryptCBC:pubKey key:kKey iv:kIV];
-            [StorageUtil savePreference:@"pubKey" value:encryptedPubKey];
+        if (fingerKey.length > 0) {
+            NSString* encryptedPubKey = [AESUtil encryptCBC:fingerKey key:kKey iv:kIV];
+            [StorageUtil savePreference:@"fin2Key" value:encryptedPubKey];
+            
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        } else if (faceKey.length > 0) {
+            NSString* encryptedPubKey = [AESUtil encryptCBC:faceKey key:kKey iv:kIV];
+            [StorageUtil savePreference:@"fac2Key" value:encryptedPubKey];
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         } else {
@@ -90,10 +97,6 @@ static NSString *const kEncryptedPS = @""; // 添加 PS 常量
             NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                              messageAsString:decryptedS ?: @""];
-        } else if ([name isEqualToString:@"ps"]) {
-            NSString* decryptedPS = [AESUtil decryptCBC:kEncryptedPS key:kKey iv:kIV];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
-                                             messageAsString:decryptedPS ?: @""];
         } else if ([name isEqualToString:@"all"]) {
             NSMutableDictionary* resultDict = [NSMutableDictionary dictionary];
             
@@ -148,39 +151,6 @@ static NSString *const kEncryptedPS = @""; // 添加 PS 常量
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                          messageAsDictionary:resultDict];
-        } else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR 
-                                              messageAsString:@"参数错误"];
-        }
-    } @catch (NSException *exception) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR 
-                                          messageAsString:exception.reason ?: @"获取失败"];
-    }
-    
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
-
-- (void)getPub:(CDVInvokedUrlCommand*)command {
-    CDVPluginResult* pluginResult = nil;
-    
-    @try {
-        NSDictionary* params = [command.arguments objectAtIndex:0];
-        NSString* name = [params objectForKey:@"name"] ?: @"";
-        
-        if ([name isEqualToString:@"first"]) {
-            NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
-                                             messageAsString:decryptedS ?: @""];
-        } else if ([name isEqualToString:@"secend"]) {
-            NSString* encryptedPubKey = [StorageUtil getPreference:@"pubKey"];
-            if (encryptedPubKey.length > 0) {
-                NSString* decryptedPubKey = [AESUtil decryptCBC:encryptedPubKey key:kKey iv:kIV];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
-                                                 messageAsString:decryptedPubKey ?: @""];
-            } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
-                                                 messageAsString:@""];
-            }
         } else {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR 
                                               messageAsString:@"参数错误"];
