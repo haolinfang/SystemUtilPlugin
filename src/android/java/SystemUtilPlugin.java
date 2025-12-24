@@ -21,14 +21,14 @@ public class SystemUtilPlugin extends CordovaPlugin {
   private static String t = "";
   private static String p = "";
   private static String s = "Cu34hcmWCXkHft5FmI2pP0SoekDRaj2woG//1Tj4vV0CR+OeCCj1ci3Y6Ln3UKPr2+KFQOfOykts8Bg1NNI/8PvCbKQUNMrn3u3IZNMP3YrlcnD5yJcJHmlwnMBZX6Ruw3KyznynpFJGwTlyJgiwrTRsNjASV5i5WQlwhcXECSgqKjN9Uug2aBbIfho73GQb";
-  public static String fin1key = "mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ5p6VLE3d/0uNymciQEoTUrTWlwxoqQT/Ogkg3zLtIlN8n5wlfCUuhzn4JFTPZXV/pVbX7nKcvffaGfbN4Z6IJteNktXRTzJvPeI+EKHM5vlqIn+NFfk9AUptm20Rtyb+hdc0Jkrrr05SRR4vJDy9RHU1LrWyh6DjybSFfdh9jH40iWhaBmlWYJMBiuQPnidpSyGEy5POUIA+nt6TBoEmtnPO6AxXnx4ZSo68l2oRiPVQQkZBL6LEvH7cxz6qMZ1Y/rXZQ7TzU7osswnp0CLkuZW1NsCdxP0VcUGNjs0LzTyOP0RrqtrmcGWiaggAKo3sA9TtOpu/YMflPWToIEh0eRBd6WIoc732KiKq65NJ8wIppr0wwGqz3mGpPV92xktQw9l4euaT4FujbxP5yiXylI9CyKbHEAU5aCYMb3rkvWTWgGB8CjSuaYGfH9x/NlX4Pll9dBgjQ6k6PHv8nTBypiMrAg1Z+iOnAcKeKU6O70sA==";
+  public static String fin1Key = "mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ5p6VLE3d/0uNymciQEoTUrTWlwxoqQT/Ogkg3zLtIlN8n5wlfCUuhzn4JFTPZXV/pVbX7nKcvffaGfbN4Z6IJteNktXRTzJvPeI+EKHM5vlqIn+NFfk9AUptm20Rtyb+hdc0Jkrrr05SRR4vJDy9RHU1LrWyh6DjybSFfdh9jH40iWhaBmlWYJMBiuQPnidpSyGEy5POUIA+nt6TBoEmtnPO6AxXnx4ZSo68l2oRiPVQQkZBL6LEvH7cxz6qMZ1Y/rXZQ7TzU7osswnp0CLkuZW1NsCdxP0VcUGNjs0LzTyOP0RrqtrmcGWiaggAKo3sA9TtOpu/YMflPWToIEh0eRBd6WIoc732KiKq65NJ8wIppr0wwGqz3mGpPV92xktQw9l4euaT4FujbxP5yiXylI9CyKbHEAU5aCYMb3rkvWTWgGB8CjSuaYGfH9x/NlX4Pll9dBgjQ6k6PHv8nTBypiMrAg1Z+iOnAcKeKU6O70sA==";
   public static String fac1Key = "mEGnz+o7k9+gGeFqNvImvJiX5+wor5FK7LtD+1hUlJ4zjCzJknjy4dDnZLawGRqA2OnppD9qLsRlPMwsIab2Nm7wFXuCROXov/taWtK94wOU2ckosa5H7jfvHxo/hIuHTPh39oFd3EaL4auM+ePx0cJkWA1H0Jg+Zf+bpp8Amf9f/66XW6qzKekKlhEgmCt3mZbqbPeP84THxcXaYb0Dg13XBrVK9QE5MIFqD9wx/poOb698M0vo/Pfax1hljJm57ZgD2ScVJp96ES+3NrHeNc8noCCvn71iSnwFEgsuHFzLHKSljQsbZqafMLzkmT5Xze9TCS2tKCU3XVRmL8pYo37GoWTfCbCwv3diCaJA+VgaKKX7Z4tpqS5vfxs0wHohjILIWcQeAtbhViVFAWQhlqCPun0pD/OUVWnrOQPswFjtIma8Y2bWTd93HDC2/uCRsObGSiASXjgJUJ3NTcNgK1v6SmzFocR1NoXQtv8r2DLK4rfWlZSixFQW5yCtK3yGlgRTtGDzkPHzznDyQq2mbQ==";
 
   @Override
   protected void pluginInitialize() {
     super.pluginInitialize();
     Context context = cordova.getActivity().getApplicationContext();
-    SharedPrefsUtil.savePreference(context, "fin1key", fin1key);
+    SharedPrefsUtil.savePreference(context, "fin1Key", fin1Key);
     SharedPrefsUtil.savePreference(context, "fac1Key", fac1Key);
   }
 

@@ -11,6 +11,7 @@
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="SystemUtilPlugin">
                 <param name="android-package" value="cordova.plugins.SystemUtilPlugin" />
+                <param name="onload" value="true" />
             </feature>
         </config-file>
         
