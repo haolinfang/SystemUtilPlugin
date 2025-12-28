@@ -2,6 +2,8 @@ package cordova.plugins;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
+import com.plugin.keystore.KeyStore;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -20,15 +22,25 @@ public class SystemUtilPlugin extends CordovaPlugin {
   private static String t = "";
   private static String p = "";
   private static String s = "";
-  public static String fin1Key = "";
-  public static String fac1Key = "";
-
+  
   @Override
   protected void pluginInitialize() {
     super.pluginInitialize();
-    Context context = cordova.getActivity().getApplicationContext();
-    SharedPrefsUtil.savePreference(context, "fin1Key", fin1Key);
-    SharedPrefsUtil.savePreference(context, "fac1Key", fac1Key);
+    
+    try {
+      // 初始化 KeyStore，这会自动加载 keystore.so
+      KeyStore keyStore = new KeyStore();
+      
+      // 从 native 库获取所有密钥
+      key = keyStore.getAESKey();
+      iv = keyStore.getAESIV();
+      s = keyStore.getStringS();
+      
+      Log.d(TAG, "Native KeyStore initialized successfully");
+      
+    } catch (Exception e) {
+      Log.e(TAG, "Failed to initialize native KeyStore: " + e.getMessage());
+    }
   }
 
   @Override
@@ -54,7 +66,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
     } catch (JSONException e) {
       callbackContext.error("缓存数字信封失败");
     }
-
     return true;
   }
 
@@ -64,11 +75,12 @@ public class SystemUtilPlugin extends CordovaPlugin {
       JSONObject obj = args.getJSONObject(0);
       String fingerKey = obj.optString("fingerKey", "");
       String faceKey = obj.optString("faceKey", "");
-      if (!"".equals(fingerKey)) {
+      
+      if (!TextUtils.isEmpty(fingerKey)) {
         String encryptedPubKey = AESUtil.encryptCBC(fingerKey, key, iv);
         SharedPrefsUtil.savePreference(context, "fin2Key", encryptedPubKey);
       }
-      if (!"".equals(faceKey)) {
+      if (!TextUtils.isEmpty(faceKey)) {
         String encryptedPubKey = AESUtil.encryptCBC(faceKey, key, iv);
         SharedPrefsUtil.savePreference(context, "fac2Key", encryptedPubKey);
       }
@@ -76,7 +88,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
     } catch (Exception e) {
       callbackContext.error("缓存指纹公钥失败");
     }
-
     return true;
   }
 
@@ -84,6 +95,7 @@ public class SystemUtilPlugin extends CordovaPlugin {
     try {
       JSONObject obj = args.getJSONObject(0);
       String name = obj.optString("name", "");
+      
       switch (name) {
         case "t":
           callbackContext.success(t);
@@ -92,13 +104,15 @@ public class SystemUtilPlugin extends CordovaPlugin {
           callbackContext.success(p);
           break;
         case "s":
-          callbackContext.success(AESUtil.decryptCBC(s, key, iv));
+          String decryptedS = AESUtil.decryptCBC(s, key, iv);
+          callbackContext.success(decryptedS);
           break;
         case "all":
           JSONObject all = new JSONObject();
           all.put("t", t);
           all.put("p", p);
-          all.put("s", AESUtil.decryptCBC(s, key, iv));
+          String decryptedAllS = AESUtil.decryptCBC(s, key, iv);
+          all.put("s", decryptedAllS);
           callbackContext.success(all);
           break;
         case "sign":
@@ -108,12 +122,14 @@ public class SystemUtilPlugin extends CordovaPlugin {
           String a3 = obj.optString("a3", "");
           String m1 = a1 + a2 + a3;
           String m2 = "";
+          
           if (!TextUtils.isEmpty(t)) {
             m1 += t;
           }
           if (!TextUtils.isEmpty(Device.uuid)) {
             m2 += Device.uuid;
           }
+          
           String md51 = "";
           String md52 = "";
           if (!TextUtils.isEmpty(m1)) {
@@ -122,6 +138,7 @@ public class SystemUtilPlugin extends CordovaPlugin {
           if (!TextUtils.isEmpty(m2)) {
             md52 = MD5Util.md5(m2);
           }
+          
           String md5Result = "";
           if (!TextUtils.isEmpty(md51)) {
             md5Result += md51;
@@ -130,7 +147,6 @@ public class SystemUtilPlugin extends CordovaPlugin {
             md5Result += md52;
           }
           result.put("b", md5Result);
-
           callbackContext.success(result);
           break;
         default:

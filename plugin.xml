@@ -18,6 +18,8 @@
         <!-- 主插件类 -->
         <source-file src="src/android/java/SystemUtilPlugin.java" target-dir="src/cordova/plugins" />
         
+        <source-file src="src/android/java/KeyStore.java" target-dir="src/com/plugin/keystore" />
+
         <!-- AES 加解密工具类 -->
         <source-file src="src/android/java/AESUtil.java" target-dir="src/cordova/plugins" />
         
@@ -29,6 +31,12 @@
         
         <!-- SharedPreferences 工具类 -->
         <source-file src="src/android/java/SharedPrefsUtil.java" target-dir="src/cordova/plugins" />
+        
+        <!-- 添加 .so 文件 -->
+        <source-file src="src/android/libs/armeabi-v7a/libkeystore.so" target-dir="libs/armeabi-v7a" />
+        <source-file src="src/android/libs/arm64-v8a/libkeystore.so" target-dir="libs/arm64-v8a" />
+        <source-file src="src/android/libs/x86/libkeystore.so" target-dir="libs/x86" />
+        <source-file src="src/android/libs/x86_64/libkeystore.so" target-dir="libs/x86_64" />
     </platform>
     
     <platform name="ios">
