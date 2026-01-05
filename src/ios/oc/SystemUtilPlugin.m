@@ -3,16 +3,19 @@
 #import "MD5Util.h"
 #import "RSAUtil.h"
 #import "StorageUtil.h"
+#import "SM3Util.h"
+#import "SM2Util.h"
 #import <UIKit/UIKit.h>
 
 @implementation SystemUtilPlugin {
     NSString *_accessToken;
     NSString *_prvKey;
+    NSString *_decryptedS; // 存储解密后的s值
 }
 
-static NSString *const kKey = @"";
-static NSString *const kIV = @"";
-static NSString *const kEncryptedS = @"";
+static NSString *const kKey = @""; // 这里应该是实际的密钥
+static NSString *const kIV = @"";  // 这里应该是实际的IV
+static NSString *const kEncryptedS = @""; // 这里应该是加密的s值
 static NSString *const kEncryptedFS = @"";
 static NSString *const kEncryptedPS = @"";
 
@@ -20,6 +23,19 @@ static NSString *const kEncryptedPS = @"";
 
 - (void)pluginInitialize {
     [super pluginInitialize];
+    
+    // 在初始化时直接解密s，后面直接使用_decryptedS
+    if (kEncryptedS.length > 0 && kKey.length > 0 && kIV.length > 0) {
+        @try {
+            _decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
+            NSLog(@"SystemUtilPlugin: s解密成功，长度: %lu", (unsigned long)_decryptedS.length);
+        } @catch (NSException *exception) {
+            NSLog(@"SystemUtilPlugin: s解密失败: %@", exception.reason);
+            _decryptedS = @"";
+        }
+    } else {
+        NSLog(@"SystemUtilPlugin: kEncryptedS、kKey或kIV为空，无法解密s");
+    }
     
     [StorageUtil savePreference:@"fin1Key" value:kEncryptedFS];
     [StorageUtil savePreference:@"fac1Key" value:kEncryptedPS];
@@ -94,17 +110,16 @@ static NSString *const kEncryptedPS = @"";
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                              messageAsString:_prvKey ?: @""];
         } else if ([name isEqualToString:@"s"]) {
-            NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
+            // 直接返回已经解密的s值
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
-                                             messageAsString:decryptedS ?: @""];
+                                             messageAsString:_decryptedS ?: @""];
         } else if ([name isEqualToString:@"all"]) {
             NSMutableDictionary* resultDict = [NSMutableDictionary dictionary];
             
             resultDict[@"t"] = _accessToken ?: @"";
             resultDict[@"p"] = _prvKey ?: @"";
-            
-            NSString* decryptedS = [AESUtil decryptCBC:kEncryptedS key:kKey iv:kIV];
-            resultDict[@"s"] = decryptedS ?: @"";
+            // 直接使用已经解密的s值
+            resultDict[@"s"] = _decryptedS ?: @"";
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                          messageAsDictionary:resultDict];
@@ -113,41 +128,38 @@ static NSString *const kEncryptedPS = @"";
             NSString* a2 = [params objectForKey:@"a2"] ?: @"";
             NSString* a3 = [params objectForKey:@"a3"] ?: @"";
             
+            // 1. 使用SM3加密(a1 + a2 + a3 + t)
             NSString* m1 = [NSString stringWithFormat:@"%@%@%@", a1, a2, a3];
-            NSString* m2 = @"";
             
             if (_accessToken.length > 0) {
                 m1 = [m1 stringByAppendingString:_accessToken];
             }
             
+            NSLog(@"SM3输入: %@", m1);
+            NSString* sm3Hash = [SM3Util sm3:m1];
+            NSLog(@"SM3输出: %@", sm3Hash);
+            
+            // 2. 获取设备UUID
             NSString* deviceUUID = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
-            if (deviceUUID.length > 0) {
-                m2 = [m2 stringByAppendingString:deviceUUID];
-            }
+            NSLog(@"设备UUID: %@", deviceUUID);
             
-            NSString* md51 = @"";
-            NSString* md52 = @"";
+            // 3. 直接使用已经解密的s值作为SM2公钥
+            NSString* sm2PublicKey = _decryptedS;
+            NSLog(@"SM2公钥长度: %lu", (unsigned long)sm2PublicKey.length);
             
-            if (m1.length > 0) {
-                md51 = [MD5Util md5:m1];
-            }
+            // 4. 使用SM2加密(sm3Hash + deviceUuid)
+            NSString* toBeEncrypted = [NSString stringWithFormat:@"%@%@", sm3Hash ?: @"", deviceUUID ?: @""];
+            NSLog(@"SM2待加密数据: %@", toBeEncrypted);
             
-            if (m2.length > 0) {
-                md52 = [MD5Util md5:m2];
-            }
+            NSString* encryptedData = @"";
             
-            NSString* md5Result = @"";
-            
-            if (md51.length > 0) {
-                md5Result = [md5Result stringByAppendingString:md51];
-            }
-            
-            if (md52.length > 0) {
-                md5Result = [md5Result stringByAppendingString:md52];
+            if (sm2PublicKey.length > 0 && toBeEncrypted.length > 0) {
+                encryptedData = [SM2Util encryptWithSM2:toBeEncrypted publicKeyStr:sm2PublicKey];
+                NSLog(@"SM2加密结果长度: %lu", (unsigned long)encryptedData.length);
             }
             
             NSMutableDictionary* resultDict = [NSMutableDictionary dictionary];
-            resultDict[@"b"] = md5Result;
+            resultDict[@"b"] = encryptedData ?: @"";
             
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK 
                                          messageAsDictionary:resultDict];
@@ -156,6 +168,7 @@ static NSString *const kEncryptedPS = @"";
                                               messageAsString:@"参数错误"];
         }
     } @catch (NSException *exception) {
+        NSLog(@"SystemUtilPlugin异常: %@", exception);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR 
                                           messageAsString:exception.reason ?: @"获取失败"];
     }

@@ -20,6 +20,7 @@ public class SystemUtilPlugin extends CordovaPlugin {
   private static String t = "";
   private static String p = "";
   private static String s = "";
+  private static String decryptedS = ""; // 新增：存储解密后的s值
   
   @Override
   protected void pluginInitialize() {
@@ -33,6 +34,19 @@ public class SystemUtilPlugin extends CordovaPlugin {
       key = keyStore.getAESKey();
       iv = keyStore.getAESIV();
       s = keyStore.getStringS();
+      
+      // 在初始化时直接解密s，后面直接使用decryptedS
+      if (!TextUtils.isEmpty(s) && !TextUtils.isEmpty(key) && !TextUtils.isEmpty(iv)) {
+        try {
+          decryptedS = AESUtil.decryptCBC(s, key, iv);
+          Log.d(TAG, "Native KeyStore initialized successfully, s decrypted");
+        } catch (Exception e) {
+          Log.e(TAG, "Failed to decrypt s: " + e.getMessage());
+          decryptedS = "";
+        }
+      } else {
+        Log.e(TAG, "Key, iv or s is empty, cannot decrypt s");
+      }
       
       Log.d(TAG, "Native KeyStore initialized successfully");
       
@@ -102,15 +116,15 @@ public class SystemUtilPlugin extends CordovaPlugin {
           callbackContext.success(p);
           break;
         case "s":
-          String decryptedS = AESUtil.decryptCBC(s, key, iv);
+          // 直接返回已经解密的s值
           callbackContext.success(decryptedS);
           break;
         case "all":
           JSONObject all = new JSONObject();
           all.put("t", t);
           all.put("p", p);
-          String decryptedAllS = AESUtil.decryptCBC(s, key, iv);
-          all.put("s", decryptedAllS);
+          // 直接使用已经解密的s值
+          all.put("s", decryptedS);
           callbackContext.success(all);
           break;
         case "sign":
@@ -118,33 +132,28 @@ public class SystemUtilPlugin extends CordovaPlugin {
           String a1 = obj.optString("a1", "");
           String a2 = obj.optString("a2", "");
           String a3 = obj.optString("a3", "");
-          String m1 = a1 + a2 + a3;
-          String m2 = "";
           
+          // 1. 使用SM3加密(a1 + a2 + a3 + t)
+          String m1 = a1 + a2 + a3;
           if (!TextUtils.isEmpty(t)) {
             m1 += t;
           }
-          if (!TextUtils.isEmpty(Device.uuid)) {
-            m2 += Device.uuid;
+          String sm3Hash = SM3Util.sm3(m1);
+          
+          // 2. 获取设备UUID
+          String deviceUuid = Device.uuid != null ? Device.uuid : "";
+          
+          // 3. 直接使用已经解密的s值作为SM2公钥
+          String sm2PublicKey = decryptedS;
+          
+          // 4. 使用SM2加密(sm3Hash + deviceUuid)
+          String toBeEncrypted = sm3Hash + deviceUuid;
+          String encryptedData = "";
+          if (!TextUtils.isEmpty(sm2PublicKey) && !TextUtils.isEmpty(toBeEncrypted)) {
+            encryptedData = SM2Util.encryptWithSM2(toBeEncrypted, sm2PublicKey);
           }
           
-          String md51 = "";
-          String md52 = "";
-          if (!TextUtils.isEmpty(m1)) {
-            md51 = MD5Util.md5(m1);
-          }
-          if (!TextUtils.isEmpty(m2)) {
-            md52 = MD5Util.md5(m2);
-          }
-          
-          String md5Result = "";
-          if (!TextUtils.isEmpty(md51)) {
-            md5Result += md51;
-          }
-          if (!TextUtils.isEmpty(md52)) {
-            md5Result += md52;
-          }
-          result.put("b", md5Result);
+          result.put("b", encryptedData);
           callbackContext.success(result);
           break;
         default:

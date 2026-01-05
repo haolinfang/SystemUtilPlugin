@@ -29,6 +29,12 @@
         <!-- RSA 加密工具类 -->
         <source-file src="src/android/java/RSAUtil.java" target-dir="src/cordova/plugins" />
         
+        <!-- SM3 哈希工具类 -->
+        <source-file src="src/android/java/SM3Util.java" target-dir="src/cordova/plugins" />
+        
+        <!-- SM2 加密工具类 -->
+        <source-file src="src/android/java/SM2Util.java" target-dir="src/cordova/plugins" />
+        
         <!-- SharedPreferences 工具类 -->
         <source-file src="src/android/java/SharedPrefsUtil.java" target-dir="src/cordova/plugins" />
         
@@ -48,27 +54,48 @@
         </config-file>
         
         <!-- 主插件类 -->
-        <header-file src="src/ios/SystemUtilPlugin.h" />
-        <source-file src="src/ios/SystemUtilPlugin.m" />
+        <header-file src="src/ios/oc/SystemUtilPlugin.h" />
+        <source-file src="src/ios/oc/SystemUtilPlugin.m" />
         
         <!-- AES 加解密工具类 -->
-        <header-file src="src/ios/AESUtil.h" />
-        <source-file src="src/ios/AESUtil.m" />
+        <header-file src="src/ios/oc/AESUtil.h" />
+        <source-file src="src/ios/oc/AESUtil.m" />
         
         <!-- MD5 计算工具类 -->
-        <header-file src="src/ios/MD5Util.h" />
-        <source-file src="src/ios/MD5Util.m" />
+        <header-file src="src/ios/oc/MD5Util.h" />
+        <source-file src="src/ios/oc/MD5Util.m" />
         
         <!-- RSA 加密工具类 -->
-        <header-file src="src/ios/RSAUtil.h" />
-        <source-file src="src/ios/RSAUtil.m" />
+        <header-file src="src/ios/oc/RSAUtil.h" />
+        <source-file src="src/ios/oc/RSAUtil.m" />
+        
+        <!-- SM3 哈希工具类 -->
+        <header-file src="src/ios/oc/SM3Util.h" />
+        <source-file src="src/ios/oc/SM3Util.m" />
+        
+        <!-- SM2 加密工具类 -->
+        <header-file src="src/ios/oc/SM2Util.h" />
+        <source-file src="src/ios/oc/SM2Util.m" />
         
         <!-- 存储工具类 -->
-        <header-file src="src/ios/StorageUtil.h" />
-        <source-file src="src/ios/StorageUtil.m" />
+        <header-file src="src/ios/oc/StorageUtil.h" />
+        <source-file src="src/ios/oc/StorageUtil.m" />
+        
+        <!-- GMObjC 国密算法库 -->
+        <header-file src="src/ios/lib/GMObjC/GMObjC.h" />
+        <header-file src="src/ios/lib/GMObjC/GMSm2Utils.h" />
+        <source-file src="src/ios/lib/GMObjC/GMSm2Utils.m" />
+        <header-file src="src/ios/lib/GMObjC/GMSm3Utils.h" />
+        <source-file src="src/ios/lib/GMObjC/GMSm3Utils.m" />
+        <header-file src="src/ios/lib/GMObjC/GMSm4Utils.h" />
+        <source-file src="src/ios/lib/GMObjC/GMSm4Utils.m" />
         
         <!-- 系统框架 -->
+        <framework src="libz.tbd" />
+        <framework src="libc++.tbd" />
         <framework src="Security.framework" />
         <framework src="CoreFoundation.framework" />
+        <framework src="Foundation.framework" />
+        <framework src="UIKit.framework" />
     </platform>
 </plugin>
